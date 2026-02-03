@@ -106,6 +106,7 @@ export default function AdminDashboard() {
       section: "פרק ראשון",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_LINK",
+      upayLink: "",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
@@ -397,7 +398,23 @@ export default function AdminDashboard() {
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          קישור זום
+                          קישור Upay לתשלום
+                        </label>
+                        <input
+                          type="url"
+                          value={lesson.upayLink || ""}
+                          onChange={(e) =>
+                            updateLesson(lesson.id, "upayLink", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          dir="ltr"
+                          placeholder="https://app.upay.co.il/API6/s.php?m=..."
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          קישור זום (נשלח במייל אחרי תשלום)
                         </label>
                         <input
                           type="url"

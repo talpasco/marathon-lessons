@@ -17,6 +17,7 @@ export interface Lesson {
   section: string;
   price: number;
   zoomLink: string;
+  upayLink: string;
   active: boolean;
   imageUrl?: string;
   pageContent?: {
@@ -45,6 +46,7 @@ export const defaultContent: SiteContent = {
       section: "פרק שני",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_ZOOM_LINK_1",
+      upayLink: "https://app.upay.co.il/API6/s.php?m=YOUR_UPAY_CODE_1",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
@@ -59,6 +61,7 @@ export const defaultContent: SiteContent = {
       section: "פרק ראשון",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_ZOOM_LINK_2",
+      upayLink: "https://app.upay.co.il/API6/s.php?m=YOUR_UPAY_CODE_2",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
@@ -73,6 +76,7 @@ export const defaultContent: SiteContent = {
       section: "פרק שלישי",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_ZOOM_LINK_3",
+      upayLink: "https://app.upay.co.il/API6/s.php?m=YOUR_UPAY_CODE_3",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
@@ -87,6 +91,7 @@ export const defaultContent: SiteContent = {
       section: "פרק רביעי",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_ZOOM_LINK_4",
+      upayLink: "https://app.upay.co.il/API6/s.php?m=YOUR_UPAY_CODE_4",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
@@ -101,6 +106,7 @@ export const defaultContent: SiteContent = {
       section: "פרק חמישי",
       price: 70,
       zoomLink: "https://zoom.us/j/YOUR_ZOOM_LINK_5",
+      upayLink: "https://app.upay.co.il/API6/s.php?m=YOUR_UPAY_CODE_5",
       active: true,
       pageContent: {
         features: ["שיעור חי בזום", "תרגול אינטנסיבי", "מענה על שאלות בזמן אמת"],
