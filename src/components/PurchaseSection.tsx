@@ -96,9 +96,9 @@ export default function PurchaseSection({
       {/* Payment Modal with iframe */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
+          {/* Backdrop - light grey transparent */}
           <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="absolute inset-0 bg-gray-500 bg-opacity-30"
             onClick={closeModal}
           />
 
