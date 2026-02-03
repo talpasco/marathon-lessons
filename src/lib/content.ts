@@ -36,6 +36,7 @@ export async function saveContent(content: SiteContent): Promise<string> {
     const blob = await put(CONTENT_BLOB_NAME, JSON.stringify(content, null, 2), {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
 
     return blob.url;
