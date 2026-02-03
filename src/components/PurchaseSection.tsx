@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
 interface PurchaseSectionProps {
   lessonId: string;
@@ -26,13 +26,7 @@ export default function PurchaseSection({
   const [error, setError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-
-  // Submit form to iframe when modal opens
-  useEffect(() => {
-    if (showPaymentModal && formRef.current) {
-      formRef.current.submit();
-    }
-  }, [showPaymentModal]);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const handlePayment = async () => {
     // Validate email
@@ -63,8 +57,20 @@ export default function PurchaseSection({
         throw new Error("Failed to send email");
       }
 
-      // Show modal and submit form to iframe
+      // Set the email value directly in the hidden input before showing modal
+      if (emailInputRef.current) {
+        emailInputRef.current.value = email;
+      }
+
+      // Show modal
       setShowPaymentModal(true);
+
+      // Submit form after a short delay to ensure iframe is mounted
+      setTimeout(() => {
+        if (formRef.current) {
+          formRef.current.submit();
+        }
+      }, 100);
 
     } catch (err) {
       console.error("Error:", err);
@@ -134,22 +140,21 @@ export default function PurchaseSection({
         action="https://app.upay.co.il/API6/clientsecure/redirectpage.php"
         method="post"
         target="upay_iframe"
-        style={{ display: "none" }}
       >
-        <input type="hidden" value={email} name="email" />
-        <input type="hidden" value={price.toString()} name="amount" />
-        <input type="hidden" value="" name="returnurl" />
-        <input type="hidden" value="" name="ipnurl" />
-        <input type="hidden" value={`${lessonTitle} - ${lessonDate}`} name="paymentdetails" />
-        <input type="hidden" value="1" name="maxpayments" />
-        <input type="hidden" value="1" name="livesystem" />
-        <input type="hidden" value="" name="commissionreduction" />
-        <input type="hidden" value="0" name="createinvoiceandreceipt" />
-        <input type="hidden" value="0" name="createinvoice" />
-        <input type="hidden" value="0" name="createreceipt" />
-        <input type="hidden" value="UPAY" name="refername" />
-        <input type="hidden" value="HE" name="lang" />
-        <input type="hidden" value="NIS" name="currency" />
+        <input ref={emailInputRef} type="hidden" defaultValue="" name="email" />
+        <input type="hidden" defaultValue={price.toString()} name="amount" />
+        <input type="hidden" defaultValue="" name="returnurl" />
+        <input type="hidden" defaultValue="" name="ipnurl" />
+        <input type="hidden" defaultValue={`${lessonTitle} - ${lessonDate}`} name="paymentdetails" />
+        <input type="hidden" defaultValue="1" name="maxpayments" />
+        <input type="hidden" defaultValue="1" name="livesystem" />
+        <input type="hidden" defaultValue="" name="commissionreduction" />
+        <input type="hidden" defaultValue="0" name="createinvoiceandreceipt" />
+        <input type="hidden" defaultValue="0" name="createinvoice" />
+        <input type="hidden" defaultValue="0" name="createreceipt" />
+        <input type="hidden" defaultValue="UPAY" name="refername" />
+        <input type="hidden" defaultValue="HE" name="lang" />
+        <input type="hidden" defaultValue="NIS" name="currency" />
       </form>
 
       {/* Payment Modal with iframe */}
