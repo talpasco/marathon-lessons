@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface PurchaseSectionProps {
   lessonId: string;
@@ -24,6 +24,8 @@ export default function PurchaseSection({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handlePayment = async () => {
     // Validate email
@@ -54,8 +56,8 @@ export default function PurchaseSection({
         throw new Error("Failed to send email");
       }
 
-      // Open Upay payment in new tab
-      window.open(upayLink, "_blank");
+      // Show payment modal with iframe
+      setShowPaymentModal(true);
 
     } catch (err) {
       console.error("Error:", err);
@@ -63,6 +65,10 @@ export default function PurchaseSection({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const closeModal = () => {
+    setShowPaymentModal(false);
   };
 
   if (!upayLink) {
@@ -74,43 +80,79 @@ export default function PurchaseSection({
   }
 
   return (
-    <div>
-      <div className="text-center mb-6">
-        <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
-      </div>
+    <>
+      <div>
+        <div className="text-center mb-6">
+          <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
+        </div>
 
-      {/* Email Input */}
-      <div className="mb-4">
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700 mb-2"
+        {/* Email Input */}
+        <div className="mb-4">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            כתובת אימייל לקבלת פרטי השיעור
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="your@email.com"
+            dir="ltr"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+          />
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        </div>
+
+        {/* Payment Button */}
+        <button
+          onClick={handlePayment}
+          disabled={isLoading}
+          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          כתובת אימייל לקבלת פרטי השיעור
-        </label>
-        <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
-          dir="ltr"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
-        />
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {isLoading ? "שולח..." : `לתשלום - ${price} ₪`}
+        </button>
+
+        <p className="text-xs text-gray-500 text-center mt-4">
+          התשלום מאובטח באמצעות Upay
+        </p>
       </div>
 
-      {/* Payment Button */}
-      <button
-        onClick={handlePayment}
-        disabled={isLoading}
-        className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        {isLoading ? "שולח..." : `לתשלום - ${price} ₪`}
-      </button>
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={closeModal}
+          />
 
-      <p className="text-xs text-gray-500 text-center mt-4">
-        התשלום מאובטח באמצעות Upay
-      </p>
-    </div>
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">תשלום מאובטח</h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Upay Form in iframe */}
+            <div className="p-4">
+              <iframe
+                src={`https://app.upay.co.il/API6/clientsecure/redirectpage.php?email=${encodeURIComponent(email)}&amount=${price}&paymentdetails=${encodeURIComponent(lessonTitle + " - " + lessonDate)}&maxpayments=1&livesystem=1&lang=HE&currency=NIS&refername=UPAY`}
+                className="w-full h-[500px] border-0 rounded-lg"
+                title="Upay Payment"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
