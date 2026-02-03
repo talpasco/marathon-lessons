@@ -1,15 +1,23 @@
-import { put, head } from "@vercel/blob";
+import { put, list } from "@vercel/blob";
 import { SiteContent, defaultContent } from "@/types/content";
 
 const CONTENT_BLOB_NAME = "site-content.json";
 
 export async function getContent(): Promise<SiteContent> {
   try {
-    // Try to get content from Vercel Blob
-    const blobUrl = process.env.BLOB_CONTENT_URL;
+    // Check if BLOB token exists
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.log("No BLOB_READ_WRITE_TOKEN, using default content");
+      return defaultContent;
+    }
 
-    if (blobUrl) {
-      const response = await fetch(blobUrl, { cache: "no-store" });
+    // List blobs to find our content file
+    const { blobs } = await list({ prefix: CONTENT_BLOB_NAME });
+
+    if (blobs.length > 0) {
+      // Get the most recent blob
+      const contentBlob = blobs[0];
+      const response = await fetch(contentBlob.url, { cache: "no-store" });
       if (response.ok) {
         return await response.json();
       }
@@ -24,10 +32,15 @@ export async function getContent(): Promise<SiteContent> {
 }
 
 export async function saveContent(content: SiteContent): Promise<string> {
-  const blob = await put(CONTENT_BLOB_NAME, JSON.stringify(content, null, 2), {
-    access: "public",
-    addRandomSuffix: false,
-  });
+  try {
+    const blob = await put(CONTENT_BLOB_NAME, JSON.stringify(content, null, 2), {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
-  return blob.url;
+    return blob.url;
+  } catch (error) {
+    console.error("Error saving content:", error);
+    throw error;
+  }
 }
