@@ -30,13 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    // Extract first name
-    const firstName = fullName.split(" ")[0];
-
     // Send email with Zoom link
     await sendLessonEmail({
       to: email,
-      firstName,
+      lessonTitle: lesson.title,
+      lessonDate: lesson.date,
+      lessonTime: lesson.time,
       zoomLink: lesson.zoomLink,
     });
 
