@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface SendLessonEmailParams {
   to: string;
   firstName: string;
@@ -9,6 +7,15 @@ interface SendLessonEmailParams {
 }
 
 export async function sendLessonEmail({ to, firstName, zoomLink }: SendLessonEmailParams) {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log("Resend API key not configured - skipping email send");
+    console.log(`Would send email to ${to} with zoom link: ${zoomLink}`);
+    return { id: "mock-email-id" };
+  }
+
+  const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
     from: "שיעורי מרתון עם רועי <noreply@yourdomain.com>", // Replace with your verified domain
     to: [to],
