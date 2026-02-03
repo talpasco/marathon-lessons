@@ -1,26 +1,28 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import lessonsData from "@/data/lessons.json";
-import { Lesson } from "@/types/lesson";
+import { getContent } from "@/lib/content";
 import PurchaseForm from "@/components/PurchaseForm";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateStaticParams() {
-  return lessonsData.lessons.map((lesson) => ({
-    id: lesson.id,
-  }));
-}
-
 export default async function LessonPage({ params }: PageProps) {
   const { id } = await params;
-  const lesson: Lesson | undefined = lessonsData.lessons.find((l) => l.id === id);
+  const content = await getContent();
+  const lesson = content.lessons.find((l) => l.id === id);
 
   if (!lesson) {
     notFound();
   }
+
+  const features = lesson.pageContent?.features || [
+    "שיעור חי בזום",
+    "תרגול אינטנסיבי",
+    "מענה על שאלות בזמן אמת",
+  ];
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-6 py-12 md:px-12 lg:px-24">
@@ -64,54 +66,24 @@ export default async function LessonPage({ params }: PageProps) {
                 פרטי השיעור
               </h2>
               <ul className="space-y-3 text-gray-700">
-                <li className="flex items-center">
-                  <svg
-                    className="w-5 h-5 text-green-500 ml-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  שיעור חי בזום
-                </li>
-                <li className="flex items-center">
-                  <svg
-                    className="w-5 h-5 text-green-500 ml-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  תרגול אינטנסיבי
-                </li>
-                <li className="flex items-center">
-                  <svg
-                    className="w-5 h-5 text-green-500 ml-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  מענה על שאלות בזמן אמת
-                </li>
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-center">
+                    <svg
+                      className="w-5 h-5 text-green-500 ml-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

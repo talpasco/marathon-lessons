@@ -1,9 +1,11 @@
 import Link from "next/link";
-import lessonsData from "@/data/lessons.json";
-import { Lesson } from "@/types/lesson";
+import { getContent } from "@/lib/content";
 
-export default function Home() {
-  const lessons: Lesson[] = lessonsData.lessons.filter((lesson) => lesson.active);
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const content = await getContent();
+  const lessons = content.lessons.filter((lesson) => lesson.active);
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-6 py-12 md:px-12 lg:px-24">
@@ -11,19 +13,19 @@ export default function Home() {
         {/* Header Section */}
         <header className="mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            שיעורי מרתון עם רועי
+            {content.homepage.title}
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            בואו לשפר את היכולות לקראת הבחינה הפסיכומטרית הקרובה
+            {content.homepage.subtitle}
           </p>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            מהם שיעורי המרתון?
+            {content.homepage.sectionTitle}
           </h2>
           <div className="text-gray-700 space-y-2">
-            <p>שורה ראשונה של טקסט - ניתן לערוך בקובץ page.tsx</p>
-            <p>שורה שנייה של טקסט - ניתן לערוך בקובץ page.tsx</p>
-            <p>שורה שלישית של טקסט - ניתן לערוך בקובץ page.tsx</p>
+            {content.homepage.description.map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
           </div>
         </header>
 

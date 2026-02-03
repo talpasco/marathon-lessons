@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { sendLessonEmail } from "@/lib/email";
-import lessonsData from "@/data/lessons.json";
+import { getContent } from "@/lib/content";
 
 interface PageProps {
   searchParams: Promise<{
@@ -16,7 +16,8 @@ export default async function PaymentSuccessPage({ searchParams }: PageProps) {
 
   // Send email if all params are present (backup for webhook)
   if (lessonId && email && name) {
-    const lesson = lessonsData.lessons.find((l) => l.id === lessonId);
+    const content = await getContent();
+    const lesson = content.lessons.find((l) => l.id === lessonId);
     if (lesson) {
       try {
         const firstName = decodeURIComponent(name).split(" ")[0];

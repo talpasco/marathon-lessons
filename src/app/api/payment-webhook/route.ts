@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendLessonEmail } from "@/lib/email";
-import lessonsData from "@/data/lessons.json";
+import { getContent } from "@/lib/content";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     const { lessonId, fullName, email } = metadata;
 
     // Find the lesson to get the Zoom link
-    const lesson = lessonsData.lessons.find((l) => l.id === lessonId);
+    const content = await getContent();
+    const lesson = content.lessons.find((l) => l.id === lessonId);
 
     if (!lesson) {
       console.error("Lesson not found:", lessonId);
