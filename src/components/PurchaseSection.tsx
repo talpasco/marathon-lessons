@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
 interface PurchaseSectionProps {
   lessonId: string;
@@ -24,18 +24,6 @@ export default function PurchaseSection({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  // Auto-submit the form to iframe after modal is shown
-  useEffect(() => {
-    if (showPaymentModal && formRef.current) {
-      // Small delay to ensure iframe is mounted
-      setTimeout(() => {
-        formRef.current?.submit();
-      }, 100);
-    }
-  }, [showPaymentModal]);
 
   const handlePayment = async () => {
     // Validate email
@@ -66,8 +54,8 @@ export default function PurchaseSection({
         throw new Error("Failed to send email");
       }
 
-      // Show modal with iframe and submit form
-      setShowPaymentModal(true);
+      // Open Upay payment in new tab
+      window.open(upayLink, "_blank");
 
     } catch (err) {
       console.error("Error:", err);
@@ -75,10 +63,6 @@ export default function PurchaseSection({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const closeModal = () => {
-    setShowPaymentModal(false);
   };
 
   if (!upayLink) {
@@ -90,104 +74,43 @@ export default function PurchaseSection({
   }
 
   return (
-    <>
-      <div>
-        <div className="text-center mb-6">
-          <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
-        </div>
-
-        {/* Email Input */}
-        <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            כתובת אימייל לקבלת פרטי השיעור
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            dir="ltr"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
-          />
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </div>
-
-        {/* Payment Button */}
-        <button
-          onClick={handlePayment}
-          disabled={isLoading}
-          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {isLoading ? "שולח..." : `לתשלום - ${price} ₪`}
-        </button>
-
-        <p className="text-xs text-gray-500 text-center mt-4">
-          התשלום מאובטח באמצעות Upay
-        </p>
+    <div>
+      <div className="text-center mb-6">
+        <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
       </div>
 
-      {/* Hidden Upay Form - submits via POST to iframe */}
-      <form
-        ref={formRef}
-        name="upayform"
-        action="https://app.upay.co.il/API6/clientsecure/redirectpage.php"
-        method="post"
-        target="upay-iframe"
-        style={{ display: "none" }}
+      {/* Email Input */}
+      <div className="mb-4">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          כתובת אימייל לקבלת פרטי השיעור
+        </label>
+        <input
+          type="email"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          dir="ltr"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+        />
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      </div>
+
+      {/* Payment Button */}
+      <button
+        onClick={handlePayment}
+        disabled={isLoading}
+        className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        <input type="hidden" value={email} name="email" />
-        <input type="hidden" value={price.toString()} name="amount" />
-        <input type="hidden" value="" name="returnurl" />
-        <input type="hidden" value="" name="ipnurl" />
-        <input type="hidden" value={`${lessonTitle} - ${lessonDate}`} name="paymentdetails" />
-        <input type="hidden" value="1" name="maxpayments" />
-        <input type="hidden" value="1" name="livesystem" />
-        <input type="hidden" value="" name="commissionreduction" />
-        <input type="hidden" value="0" name="createinvoiceandreceipt" />
-        <input type="hidden" value="0" name="createinvoice" />
-        <input type="hidden" value="0" name="createreceipt" />
-        <input type="hidden" value="UPAY" name="refername" />
-        <input type="hidden" value="HE" name="lang" />
-        <input type="hidden" value="NIS" name="currency" />
-      </form>
+        {isLoading ? "שולח..." : `לתשלום - ${price} ₪`}
+      </button>
 
-      {/* Payment Modal with iframe */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black bg-opacity-50"
-            onClick={closeModal}
-          />
-
-          {/* Modal Content */}
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">תשלום מאובטח</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Iframe for Upay */}
-            <div className="p-0">
-              <iframe
-                name="upay-iframe"
-                className="w-full h-[600px] border-0"
-                title="Upay Payment"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <p className="text-xs text-gray-500 text-center mt-4">
+        התשלום מאובטח באמצעות Upay
+      </p>
+    </div>
   );
 }
