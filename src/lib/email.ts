@@ -2,11 +2,19 @@ import { Resend } from "resend";
 
 interface SendLessonEmailParams {
   to: string;
-  firstName: string;
+  lessonTitle: string;
+  lessonDate: string;
+  lessonTime: string;
   zoomLink: string;
 }
 
-export async function sendLessonEmail({ to, firstName, zoomLink }: SendLessonEmailParams) {
+export async function sendLessonEmail({
+  to,
+  lessonTitle,
+  lessonDate,
+  lessonTime,
+  zoomLink,
+}: SendLessonEmailParams) {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -17,23 +25,29 @@ export async function sendLessonEmail({ to, firstName, zoomLink }: SendLessonEma
 
   const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
-    from: "שיעורי מרתון עם רועי <noreply@yourdomain.com>", // Replace with your verified domain
+    from: "שיעורי מרתון עם רועי <onboarding@resend.dev>",
     to: [to],
-    subject: "קישור לשיעור המרתון שלך",
+    subject: `פרטי השיעור - ${lessonTitle}`,
     html: `
       <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">שלום ${firstName}!</h1>
+        <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">תודה רבה!</h1>
 
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          תודה על ההשתתפות בשיעור המרתון עם רועי.
+          התשלום נקלט בהצלחה.
         </p>
 
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          מצורף קישור להצטרפות לשיעור, הלינק הינו אישי, ויש להירשם לשיעור מראש.
+          להלן פרטי השיעור:
         </p>
 
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0; font-size: 16px;"><strong>שיעור:</strong> ${lessonTitle}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>תאריך:</strong> ${lessonDate}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>שעה:</strong> ${lessonTime}</p>
+        </div>
+
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          אבקש להצטרף בזמן. נתראה!
+          קישור להצטרפות לשיעור בזום:
         </p>
 
         <div style="margin: 30px 0;">
@@ -48,6 +62,10 @@ export async function sendLessonEmail({ to, firstName, zoomLink }: SendLessonEma
         </p>
 
         <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          נתראה בשיעור!
+        </p>
 
         <p style="color: #999; font-size: 12px;">
           מייל זה נשלח אוטומטית מאתר שיעורי המרתון עם רועי.

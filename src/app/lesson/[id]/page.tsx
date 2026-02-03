@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getContent } from "@/lib/content";
+import PurchaseSection from "@/components/PurchaseSection";
 
 export const dynamic = "force-dynamic";
 
@@ -90,30 +91,15 @@ export default async function LessonPage({ params }: PageProps) {
           {/* Purchase Section */}
           <div className="lg:w-96">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-6">
-              <div className="text-center mb-6">
-                <span className="text-4xl font-bold text-gray-900">
-                  {lesson.price} ₪
-                </span>
-              </div>
-
-              {lesson.upayLink ? (
-                <a
-                  href={lesson.upayLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors"
-                >
-                  לתשלום - {lesson.price} ₪
-                </a>
-              ) : (
-                <div className="text-center text-gray-500 py-4">
-                  התשלום אינו זמין כרגע
-                </div>
-              )}
-
-              <p className="text-xs text-gray-500 text-center mt-4">
-                התשלום מאובטח באמצעות Upay
-              </p>
+              <PurchaseSection
+                lessonId={lesson.id}
+                lessonTitle={lesson.title}
+                lessonDate={lesson.date}
+                lessonTime={lesson.time}
+                price={lesson.price}
+                upayLink={lesson.upayLink || ""}
+                zoomLink={lesson.zoomLink}
+              />
             </div>
           </div>
         </div>
