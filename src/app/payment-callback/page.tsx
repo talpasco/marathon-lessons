@@ -4,9 +4,13 @@ import { useEffect } from "react";
 
 export default function PaymentCallbackPage() {
   useEffect(() => {
+    // Log all query params Upay sends back (temporary - to discover what params are available)
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    console.log("Upay callback params:", params);
+
     // Notify the parent window (if inside an iframe) that payment is complete
     if (window.parent !== window) {
-      window.parent.postMessage({ type: "PAYMENT_SUCCESS" }, "*");
+      window.parent.postMessage({ type: "PAYMENT_SUCCESS", params }, "*");
     }
   }, []);
 

@@ -57,6 +57,8 @@ export default function PurchaseSection({
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === "PAYMENT_SUCCESS") {
+        // Log params Upay sends back via the callback URL
+        console.log("Upay return params:", event.data.params);
         setShowPaymentModal(false);
 
         // Send email with lesson details
