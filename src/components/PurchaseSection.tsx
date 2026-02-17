@@ -22,9 +22,22 @@ export default function PurchaseSection({
   zoomLink,
 }: PurchaseSectionProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [email, setEmail] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const handlePayment = () => {
+    if (!email || !email.includes("@")) {
+      emailInputRef.current?.focus();
+      return;
+    }
+
+    // Set email in the hidden Upay form
+    const emailField = formRef.current?.querySelector('input[name="email"]') as HTMLInputElement;
+    if (emailField) {
+      emailField.value = email;
+    }
+
     // Show modal
     setShowPaymentModal(true);
 
@@ -52,7 +65,7 @@ export default function PurchaseSection({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              email: "roeedo@gmail.com",
+              email,
               lessonTitle,
               lessonDate,
               lessonTime,
@@ -68,7 +81,7 @@ export default function PurchaseSection({
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [lessonTitle, lessonDate, lessonTime, zoomLink]);
+  }, [email, lessonTitle, lessonDate, lessonTime, zoomLink]);
 
   if (!upayLink) {
     return (
@@ -85,10 +98,24 @@ export default function PurchaseSection({
           <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
         </div>
 
+        {/* Email Input */}
+        <div className="mb-4">
+          <input
+            ref={emailInputRef}
+            type="email"
+            dir="ltr"
+            placeholder="כתובת אימייל"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
         {/* Payment Button */}
         <button
           onClick={handlePayment}
-          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!email || !email.includes("@")}
         >
           לתשלום - {price} ₪
         </button>
