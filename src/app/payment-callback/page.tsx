@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 
 export default function PaymentCallbackPage() {
-  const searchParams = useSearchParams();
-
   useEffect(() => {
     // Notify the parent window (if inside an iframe) that payment is complete
     if (window.parent !== window) {
