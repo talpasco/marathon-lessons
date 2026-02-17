@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface PurchaseSectionProps {
   lessonId: string;
@@ -39,6 +39,18 @@ export default function PurchaseSection({
   const closeModal = () => {
     setShowPaymentModal(false);
   };
+
+  // Listen for payment success message from the iframe callback page
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "PAYMENT_SUCCESS") {
+        setShowPaymentModal(false);
+        window.location.href = "/payment-success";
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   if (!upayLink) {
     return (
@@ -79,7 +91,7 @@ export default function PurchaseSection({
       >
         <input type="hidden" value="roeedo@gmail.com" name="email" />
         <input type="hidden" value={price.toString()} name="amount" />
-        <input type="hidden" value="" name="returnurl" />
+        <input type="hidden" value="https://marathon-lessons.vercel.app/payment-callback" name="returnurl" />
         <input type="hidden" value="" name="ipnurl" />
         <input type="hidden" value={`${lessonTitle} - ${lessonDate}`} name="paymentdetails" />
         <input type="hidden" value="1" name="maxpayments" />
