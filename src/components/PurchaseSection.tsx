@@ -42,15 +42,33 @@ export default function PurchaseSection({
 
   // Listen for payment success message from the iframe callback page
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === "PAYMENT_SUCCESS") {
         setShowPaymentModal(false);
+
+        // Send email with lesson details
+        try {
+          await fetch("/api/send-lesson-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: "roeedo@gmail.com",
+              lessonTitle,
+              lessonDate,
+              lessonTime,
+              zoomLink,
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to send lesson email:", error);
+        }
+
         window.location.href = "/payment-success";
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [lessonTitle, lessonDate, lessonTime, zoomLink]);
 
   if (!upayLink) {
     return (
