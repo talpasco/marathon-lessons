@@ -137,10 +137,10 @@ export default function PurchaseSection({
         style={{ display: "none" }}
       >
         <input type="hidden" value="roeedo@gmail.com" name="email" />
-        <input type="hidden" value={price.toString()} name="amount" />
-        <input type="hidden" value="https://marathon-lessons.vercel.app/payment-callback" name="returnurl" />
+        <input type="hidden" value="1" name="amount" />
+        <input type="hidden" value={`https://marathon-lessons.vercel.app/payment-callback?user_email=${encodeURIComponent(email)}`} name="returnurl" />
         <input type="hidden" value="" name="ipnurl" />
-        <input type="hidden" value={`${lessonTitle} - ${lessonDate}`} name="paymentdetails" />
+        <input type="hidden" value="בדיקה" name="paymentdetails" />
         <input type="hidden" value="1" name="maxpayments" />
         <input type="hidden" value="1" name="livesystem" />
         <input type="hidden" value="" name="commissionreduction" />

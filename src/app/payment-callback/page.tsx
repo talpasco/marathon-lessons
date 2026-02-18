@@ -6,7 +6,14 @@ export default function PaymentCallbackPage() {
   useEffect(() => {
     // Log all query params Upay sends back (temporary - to discover what params are available)
     const params = Object.fromEntries(new URLSearchParams(window.location.search));
-    console.log("Upay callback params:", params);
+    console.log("Upay callback params:", JSON.stringify(params, null, 2));
+
+    // Send params to email for debugging
+    fetch("/api/log-callback-params", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ params }),
+    }).catch((err) => console.error("Failed to send callback params to email:", err));
 
     // Notify the parent window (if inside an iframe) that payment is complete
     if (window.parent !== window) {
