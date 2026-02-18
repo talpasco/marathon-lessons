@@ -22,22 +22,9 @@ export default function PurchaseSection({
   zoomLink,
 }: PurchaseSectionProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [email, setEmail] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const handlePayment = () => {
-    if (!email || !email.includes("@")) {
-      emailInputRef.current?.focus();
-      return;
-    }
-
-    // Set email in the hidden Upay form
-    const emailField = formRef.current?.querySelector('input[name="email"]') as HTMLInputElement;
-    if (emailField) {
-      emailField.value = email;
-    }
-
     // Show modal
     setShowPaymentModal(true);
 
@@ -57,25 +44,29 @@ export default function PurchaseSection({
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === "PAYMENT_SUCCESS") {
-        // Log params Upay sends back via the callback URL
-        console.log("Upay return params:", event.data.params);
+        const params = event.data.params;
+        console.log("Upay return params:", params);
         setShowPaymentModal(false);
 
-        // Send email with lesson details
-        try {
-          await fetch("/api/send-lesson-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email,
-              lessonTitle,
-              lessonDate,
-              lessonTime,
-              zoomLink,
-            }),
-          });
-        } catch (error) {
-          console.error("Failed to send lesson email:", error);
+        // Use the email from Upay's callback (user_email = what user entered in Upay iframe)
+        const userEmail = params.user_email || params.emailnotify;
+
+        if (userEmail) {
+          try {
+            await fetch("/api/send-lesson-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: userEmail,
+                lessonTitle,
+                lessonDate,
+                lessonTime,
+                zoomLink,
+              }),
+            });
+          } catch (error) {
+            console.error("Failed to send lesson email:", error);
+          }
         }
 
         window.location.href = "/payment-success";
@@ -83,7 +74,7 @@ export default function PurchaseSection({
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [email, lessonTitle, lessonDate, lessonTime, zoomLink]);
+  }, [lessonTitle, lessonDate, lessonTime, zoomLink]);
 
   if (!upayLink) {
     return (
@@ -100,24 +91,10 @@ export default function PurchaseSection({
           <span className="text-4xl font-bold text-gray-900">{price} ₪</span>
         </div>
 
-        {/* Email Input */}
-        <div className="mb-4">
-          <input
-            ref={emailInputRef}
-            type="email"
-            dir="ltr"
-            placeholder="כתובת אימייל"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
         {/* Payment Button */}
         <button
           onClick={handlePayment}
-          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!email || !email.includes("@")}
+          className="block w-full py-4 px-6 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 transition-colors"
         >
           לתשלום - {price} ₪
         </button>
@@ -138,7 +115,7 @@ export default function PurchaseSection({
       >
         <input type="hidden" value="roeedo@gmail.com" name="email" />
         <input type="hidden" value="1" name="amount" />
-        <input type="hidden" value={`https://marathon-lessons.vercel.app/payment-callback?user_email=${encodeURIComponent(email)}`} name="returnurl" />
+        <input type="hidden" value="https://marathon-lessons.vercel.app/payment-callback" name="returnurl" />
         <input type="hidden" value="" name="ipnurl" />
         <input type="hidden" value="בדיקה" name="paymentdetails" />
         <input type="hidden" value="1" name="maxpayments" />
