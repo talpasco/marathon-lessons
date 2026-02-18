@@ -38,6 +38,15 @@ export default function PaymentCallbackPage() {
         .catch((err) => console.error("Failed to send lesson email:", err));
     }
 
+    // Save booking data
+    if (params.errordescription === "SUCCESS") {
+      fetch("/api/save-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ params }),
+      }).catch((err) => console.error("Failed to save booking:", err));
+    }
+
     // Notify the parent window (if inside an iframe) that payment is complete
     if (window.parent !== window) {
       window.parent.postMessage({ type: "PAYMENT_SUCCESS", params }, "*");

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { EmailTemplate } from "@/types/content";
 
 interface SendLessonEmailParams {
   to: string;
@@ -6,6 +7,15 @@ interface SendLessonEmailParams {
   lessonDate: string;
   lessonTime: string;
   zoomLink: string;
+  template?: EmailTemplate;
+}
+
+function replacePlaceholders(text: string, vars: Record<string, string>): string {
+  return text
+    .replace(/\{lessonTitle\}/g, vars.lessonTitle || "")
+    .replace(/\{lessonDate\}/g, vars.lessonDate || "")
+    .replace(/\{lessonTime\}/g, vars.lessonTime || "")
+    .replace(/\{zoomLink\}/g, vars.zoomLink || "");
 }
 
 export async function sendLessonEmail({
@@ -14,8 +24,19 @@ export async function sendLessonEmail({
   lessonDate,
   lessonTime,
   zoomLink,
+  template,
 }: SendLessonEmailParams) {
   const apiKey = process.env.RESEND_API_KEY;
+
+  // Resolve template values with fallbacks
+  const subject = replacePlaceholders(
+    template?.subject || "פרטי השיעור - {lessonTitle}",
+    { lessonTitle, lessonDate, lessonTime, zoomLink }
+  );
+  const heading = template?.heading || "תודה רבה!";
+  const bodyText = template?.bodyText || "התשלום נקלט בהצלחה.";
+  const buttonText = template?.buttonText || "הצטרף לשיעור בזום";
+  const footerText = template?.footerText || "נתראה בשיעור!";
 
   if (!apiKey) {
     console.log("Resend API key not configured - skipping email send");
@@ -27,13 +48,13 @@ export async function sendLessonEmail({
   const { data, error } = await resend.emails.send({
     from: "שיעורי מרתון עם רועי <onboarding@resend.dev>",
     to: [to],
-    subject: `פרטי השיעור - ${lessonTitle}`,
+    subject,
     html: `
       <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">תודה רבה!</h1>
+        <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">${heading}</h1>
 
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          התשלום נקלט בהצלחה.
+          ${bodyText}
         </p>
 
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
@@ -53,7 +74,7 @@ export async function sendLessonEmail({
         <div style="margin: 30px 0;">
           <a href="${zoomLink}"
              style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
-            הצטרף לשיעור בזום
+            ${buttonText}
           </a>
         </div>
 
@@ -64,7 +85,7 @@ export async function sendLessonEmail({
         <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
 
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          נתראה בשיעור!
+          ${footerText}
         </p>
 
         <p style="color: #999; font-size: 12px;">

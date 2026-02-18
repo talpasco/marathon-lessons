@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SiteContent, Lesson, defaultContent } from "@/types/content";
+import { SiteContent, Lesson, Booking, defaultContent, defaultEmailTemplate } from "@/types/content";
 
 export default function AdminDashboard() {
   const [content, setContent] = useState<SiteContent>(defaultContent);
@@ -10,8 +10,10 @@ export default function AdminDashboard() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<"homepage" | "lessons">("homepage");
+  const [activeTab, setActiveTab] = useState<"homepage" | "lessons" | "emailTemplate" | "bookings">("homepage");
   const [editingLesson, setEditingLesson] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -159,6 +161,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateEmailTemplate = (field: string, value: string) => {
+    setContent((prev) => ({
+      ...prev,
+      emailTemplate: {
+        ...(prev.emailTemplate || defaultEmailTemplate),
+        [field]: value,
+      },
+    }));
+  };
+
+  const fetchBookings = async () => {
+    setIsLoadingBookings(true);
+    try {
+      const response = await fetch("/api/admin/bookings");
+      if (response.ok) {
+        const data = await response.json();
+        setBookings(data);
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -223,6 +250,29 @@ export default function AdminDashboard() {
           >
             שיעורים
           </button>
+          <button
+            onClick={() => setActiveTab("emailTemplate")}
+            className={`pb-2 px-4 font-medium ${
+              activeTab === "emailTemplate"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            תבנית מייל
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("bookings");
+              fetchBookings();
+            }}
+            className={`pb-2 px-4 font-medium ${
+              activeTab === "bookings"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            הזמנות
+          </button>
         </div>
 
         {/* Homepage Tab */}
@@ -285,6 +335,160 @@ export default function AdminDashboard() {
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Email Template Tab */}
+        {activeTab === "emailTemplate" && (
+          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+            <h2 className="text-xl font-semibold mb-4">עריכת תבנית מייל</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              ניתן להשתמש במשתנים: {"{lessonTitle}"}, {"{lessonDate}"}, {"{lessonTime}"}, {"{zoomLink}"}
+            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                נושא המייל
+              </label>
+              <input
+                type="text"
+                value={content.emailTemplate?.subject || defaultEmailTemplate.subject}
+                onChange={(e) => updateEmailTemplate("subject", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                dir="rtl"
+                placeholder="פרטי השיעור - {lessonTitle}"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                כותרת ראשית
+              </label>
+              <input
+                type="text"
+                value={content.emailTemplate?.heading || defaultEmailTemplate.heading}
+                onChange={(e) => updateEmailTemplate("heading", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                dir="rtl"
+                placeholder="תודה רבה!"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                טקסט גוף המייל
+              </label>
+              <textarea
+                value={content.emailTemplate?.bodyText || defaultEmailTemplate.bodyText}
+                onChange={(e) => updateEmailTemplate("bodyText", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                dir="rtl"
+                rows={3}
+                placeholder="התשלום נקלט בהצלחה."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                טקסט כפתור
+              </label>
+              <input
+                type="text"
+                value={content.emailTemplate?.buttonText || defaultEmailTemplate.buttonText}
+                onChange={(e) => updateEmailTemplate("buttonText", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                dir="rtl"
+                placeholder="הצטרף לשיעור בזום"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                טקסט סיום
+              </label>
+              <input
+                type="text"
+                value={content.emailTemplate?.footerText || defaultEmailTemplate.footerText}
+                onChange={(e) => updateEmailTemplate("footerText", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                dir="rtl"
+                placeholder="נתראה בשיעור!"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Bookings Tab */}
+        {activeTab === "bookings" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">
+                הזמנות ({bookings.length})
+              </h2>
+              <button
+                onClick={fetchBookings}
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+              >
+                רענן
+              </button>
+            </div>
+
+            {isLoadingBookings ? (
+              <div className="text-center py-8 text-gray-500">טוען הזמנות...</div>
+            ) : bookings.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
+                אין הזמנות עדיין
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">שם</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">טלפון</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">אימייל</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">שיעור</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">קישור זום</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">סכום</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-700">תאריך הזמנה</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {[...bookings].reverse().map((booking) => (
+                        <tr key={booking.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-gray-900">{booking.name || "-"}</td>
+                          <td className="px-4 py-3 text-gray-600" dir="ltr">{booking.phone || "-"}</td>
+                          <td className="px-4 py-3 text-gray-600" dir="ltr">{booking.email || "-"}</td>
+                          <td className="px-4 py-3 text-gray-900">{booking.lessonTitle || "-"}</td>
+                          <td className="px-4 py-3">
+                            {booking.zoomLink ? (
+                              <a
+                                href={booking.zoomLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                                dir="ltr"
+                              >
+                                קישור
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">{booking.amount ? `${booking.amount} ₪` : "-"}</td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {booking.timestamp
+                              ? new Date(booking.timestamp).toLocaleString("he-IL")
+                              : "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

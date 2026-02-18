@@ -1,3 +1,32 @@
+export interface EmailTemplate {
+  subject: string;
+  heading: string;
+  bodyText: string;
+  buttonText: string;
+  footerText: string;
+}
+
+export interface Booking {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  lessonId: string;
+  lessonTitle: string;
+  zoomLink: string;
+  transactionId: string;
+  amount: string;
+  timestamp: string;
+}
+
+export const defaultEmailTemplate: EmailTemplate = {
+  subject: "פרטי השיעור - {lessonTitle}",
+  heading: "תודה רבה!",
+  bodyText: "התשלום נקלט בהצלחה.",
+  buttonText: "הצטרף לשיעור בזום",
+  footerText: "נתראה בשיעור!",
+};
+
 export interface SiteContent {
   homepage: {
     title: string;
@@ -6,6 +35,7 @@ export interface SiteContent {
     description: string[];
   };
   lessons: Lesson[];
+  emailTemplate?: EmailTemplate;
 }
 
 export interface Lesson {
@@ -26,6 +56,7 @@ export interface Lesson {
 }
 
 export const defaultContent: SiteContent = {
+  emailTemplate: defaultEmailTemplate,
   homepage: {
     title: "שיעורי מרתון עם רועי",
     subtitle: "בואו לשפר את היכולות לקראת הבחינה הפסיכומטרית הקרובה",

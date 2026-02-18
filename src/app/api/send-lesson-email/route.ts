@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendLessonEmail } from "@/lib/email";
+import { getContent } from "@/lib/content";
 
 export async function POST(request: Request) {
   try {
@@ -13,12 +14,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch email template from site content
+    const content = await getContent();
+    const template = content.emailTemplate;
+
     await sendLessonEmail({
       to: email,
       lessonTitle,
       lessonDate,
       lessonTime,
       zoomLink,
+      template,
     });
 
     return NextResponse.json({ success: true });
