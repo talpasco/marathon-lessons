@@ -4,16 +4,31 @@ import { useEffect } from "react";
 
 export default function PaymentCallbackPage() {
   useEffect(() => {
-    // Log all query params Upay sends back (temporary - to discover what params are available)
     const params = Object.fromEntries(new URLSearchParams(window.location.search));
     console.log("Upay callback params:", JSON.stringify(params, null, 2));
 
-    // Send params to email for debugging
+    // Send debug params to email
     fetch("/api/log-callback-params", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ params }),
     }).catch((err) => console.error("Failed to send callback params to email:", err));
+
+    // Send lesson email to the user using emailnotify from Upay
+    const userEmail = params.emailnotify || params.user_email;
+    if (userEmail && params.errordescription === "SUCCESS") {
+      fetch("/api/send-lesson-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          lessonTitle: params.lessonTitle || "",
+          lessonDate: params.lessonDate || "",
+          lessonTime: params.lessonTime || "",
+          zoomLink: params.zoomLink || "",
+        }),
+      }).catch((err) => console.error("Failed to send lesson email:", err));
+    }
 
     // Notify the parent window (if inside an iframe) that payment is complete
     if (window.parent !== window) {
