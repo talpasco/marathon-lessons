@@ -16,18 +16,26 @@ export default function PaymentCallbackPage() {
 
     // Send lesson email to the user using emailnotify from Upay
     const userEmail = params.emailnotify || params.user_email;
-    if (userEmail && params.errordescription === "SUCCESS") {
-      fetch("/api/send-lesson-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: userEmail,
-          lessonTitle: params.lessonTitle || "",
-          lessonDate: params.lessonDate || "",
-          lessonTime: params.lessonTime || "",
-          zoomLink: params.zoomLink || "",
-        }),
-      }).catch((err) => console.error("Failed to send lesson email:", err));
+    const lessonId = params.lessonId;
+    if (userEmail && params.errordescription === "SUCCESS" && lessonId) {
+      fetch(`/api/lesson-info?lessonId=${encodeURIComponent(lessonId)}`)
+        .then((res) => res.json())
+        .then((lesson) => {
+          if (lesson.title) {
+            return fetch("/api/send-lesson-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: userEmail,
+                lessonTitle: lesson.title,
+                lessonDate: lesson.date,
+                lessonTime: lesson.time,
+                zoomLink: lesson.zoomLink,
+              }),
+            });
+          }
+        })
+        .catch((err) => console.error("Failed to send lesson email:", err));
     }
 
     // Notify the parent window (if inside an iframe) that payment is complete
