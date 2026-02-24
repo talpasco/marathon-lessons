@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-  // Check authentication
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("admin_session");
-
-  if (!sessionCookie || sessionCookie.value !== "authenticated") {
+  // Check authentication using same method as other admin routes
+  const isAuthenticated = await verifySession();
+  if (!isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
