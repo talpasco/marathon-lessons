@@ -1,230 +1,173 @@
-"use client";
+import { redirect } from "next/navigation";
+import { addBooking } from "@/lib/bookings";
+import { getContent } from "@/lib/content";
+import { sendLessonEmail } from "@/lib/email";
+import { Booking } from "@/types/content";
+import { Resend } from "resend";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
 
-export default function PaymentCallbackPage() {
-  const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
-  const [errorMessage, setErrorMessage] = useState("");
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
-  useEffect(() => {
-    async function processPayment() {
-      const params = Object.fromEntries(new URLSearchParams(window.location.search));
-      console.log("Upay callback params:", JSON.stringify(params, null, 2));
+export default async function PaymentCallbackPage({ searchParams }: PageProps) {
+  const params = await searchParams;
 
-      // Check if payment was successful
-      if (params.errordescription !== "SUCCESS") {
-        setStatus("error");
-        setErrorMessage(params.errordescription || "התשלום נכשל");
-        return;
-      }
+  // Convert all params to strings
+  const getParam = (key: string): string => {
+    const val = params[key];
+    if (Array.isArray(val)) return val[0] || "";
+    return val || "";
+  };
 
-      const userEmail = params.emailnotify || params.user_email;
-      const lessonId = params.lessonId;
+  const errordescription = getParam("errordescription");
+  const lessonId = getParam("lessonId");
+  const userEmail = getParam("emailnotify") || getParam("user_email");
+  const cardownername = getParam("cardownername");
+  const cellphonenotify = getParam("cellphonenotify");
+  const transactionid = getParam("transactionid");
+  const amount = getParam("amount");
+  const productdescription = getParam("productdescription");
 
-      try {
-        // 1. Save booking first (most important - this records the payment)
-        await fetch("/api/save-booking", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ params }),
-        });
-        console.log("Booking saved successfully");
+  // Log all params for debugging
+  const allParams: Record<string, string> = {};
+  for (const [key, value] of Object.entries(params)) {
+    allParams[key] = Array.isArray(value) ? value[0] || "" : value || "";
+  }
+  console.log("Payment callback params (server):", JSON.stringify(allParams, null, 2));
 
-        // 2. Send email with lesson details
-        if (userEmail && lessonId) {
-          const lessonRes = await fetch(`/api/lesson-info?lessonId=${encodeURIComponent(lessonId)}`);
-          const lesson = await lessonRes.json();
-
-          if (lesson.title) {
-            await fetch("/api/send-lesson-email", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: userEmail,
-                lessonTitle: lesson.title,
-                lessonDate: lesson.date,
-                lessonTime: lesson.time,
-                zoomLink: lesson.zoomLink,
-              }),
-            });
-            console.log("Email sent successfully to", userEmail);
-          }
-        }
-
-        // 3. Log callback params (debug - non-blocking)
-        fetch("/api/log-callback-params", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ params }),
-        }).catch((err) => console.error("Failed to log callback params:", err));
-
-        // All done - redirect to success page
-        setStatus("success");
-        window.location.href = "/payment-success";
-      } catch (error) {
-        console.error("Error processing payment callback:", error);
-        // Even on error, try to redirect - the payment itself went through
-        setStatus("success");
-        window.location.href = "/payment-success";
-      }
+  // Send debug email (non-blocking, fire and forget)
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) {
+      const resend = new Resend(apiKey);
+      resend.emails.send({
+        from: "שיעורי מרתון עם רועי <onboarding@resend.dev>",
+        to: ["tal.galmor3@gmail.com"],
+        subject: "Upay Callback Params - Debug",
+        html: `
+          <div style="font-family: monospace; padding: 20px;">
+            <h2>Upay Callback Parameters</h2>
+            <p>Received at: ${new Date().toISOString()}</p>
+            <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(allParams, null, 2)}</pre>
+            <h3>Individual params:</h3>
+            <ul>
+              ${Object.entries(allParams).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join("\n              ")}
+            </ul>
+          </div>
+        `,
+      }).catch((err: unknown) => console.error("Failed to send debug email:", err));
     }
+  } catch (e) {
+    console.error("Debug email error:", e);
+  }
 
-    processPayment();
-  }, []);
-
-  return (
-    <div
-      dir="rtl"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        fontFamily: "Heebo, sans-serif",
-        background: "#f9fafb",
-        padding: "2rem",
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        {status === "processing" && (
-          <>
-            {/* Spinner */}
-            <div
-              style={{
-                width: "60px",
-                height: "60px",
-                border: "4px solid #e5e7eb",
-                borderTop: "4px solid #2563eb",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-                margin: "0 auto 1.5rem",
-              }}
-            />
-            <h1
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                color: "#111827",
-                marginBottom: "0.75rem",
-              }}
-            >
-              מעבד את התשלום...
-            </h1>
-            <p style={{ fontSize: "1rem", color: "#4b5563" }}>
-              אנא המתן, אל תסגור את הדף
-            </p>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
-          </>
-        )}
-
-        {status === "error" && (
-          <>
-            {/* Error Icon */}
-            <div
-              style={{
-                width: "80px",
-                height: "80px",
-                borderRadius: "50%",
-                background: "#fee2e2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 1.5rem",
-              }}
-            >
-              <svg
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </div>
-            <h1
-              style={{
-                fontSize: "2rem",
-                fontWeight: "bold",
-                color: "#111827",
-                marginBottom: "0.75rem",
-              }}
-            >
-              שגיאה בתשלום
-            </h1>
-            <p style={{ fontSize: "1.1rem", color: "#4b5563", marginBottom: "1.5rem" }}>
-              {errorMessage}
-            </p>
-            <a
-              href="/"
-              style={{
-                display: "inline-block",
-                backgroundColor: "#2563eb",
-                color: "white",
-                padding: "12px 24px",
-                textDecoration: "none",
-                borderRadius: "8px",
-                fontSize: "1rem",
-                fontWeight: "bold",
-              }}
-            >
-              חזרה לעמוד הראשי
-            </a>
-          </>
-        )}
-
-        {status === "success" && (
-          <>
-            {/* Checkmark */}
-            <div
-              style={{
-                width: "80px",
-                height: "80px",
-                borderRadius: "50%",
-                background: "#d1fae5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 1.5rem",
-              }}
-            >
-              <svg
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1
-              style={{
-                fontSize: "2rem",
-                fontWeight: "bold",
-                color: "#111827",
-                marginBottom: "0.75rem",
-              }}
-            >
-              תודה רבה!
-            </h1>
-            <p style={{ fontSize: "1.1rem", color: "#4b5563" }}>
-              מעביר אותך...
-            </p>
-          </>
-        )}
+  // If payment failed, show error page
+  if (errordescription !== "SUCCESS") {
+    return (
+      <div
+        dir="rtl"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          fontFamily: "Heebo, sans-serif",
+          background: "#f9fafb",
+          padding: "2rem",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "50%",
+              background: "#fee2e2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.5rem",
+            }}
+          >
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#111827", marginBottom: "0.75rem" }}>
+            שגיאה בתשלום
+          </h1>
+          <p style={{ fontSize: "1.1rem", color: "#4b5563", marginBottom: "1.5rem" }}>
+            {errordescription || "התשלום נכשל"}
+          </p>
+          <a
+            href="/"
+            style={{
+              display: "inline-block",
+              backgroundColor: "#2563eb",
+              color: "white",
+              padding: "12px 24px",
+              textDecoration: "none",
+              borderRadius: "8px",
+              fontSize: "1rem",
+              fontWeight: "bold",
+            }}
+          >
+            חזרה לעמוד הראשי
+          </a>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // ===== Payment SUCCESS — process everything server-side =====
+  try {
+    // 1. Get lesson info from content
+    const content = await getContent();
+    const lesson = lessonId ? content.lessons.find((l) => l.id === lessonId) : null;
+
+    // 2. Save booking (most important — records the payment)
+    const booking: Booking = {
+      id: `booking-${Date.now()}-${transactionid}`,
+      email: userEmail,
+      name: cardownername,
+      phone: cellphonenotify,
+      lessonId,
+      lessonTitle: lesson?.title || productdescription || "",
+      zoomLink: lesson?.zoomLink || "",
+      transactionId: transactionid,
+      amount,
+      timestamp: new Date().toISOString(),
+    };
+
+    await addBooking(booking);
+    console.log("Booking saved successfully:", booking.id);
+
+    // 3. Send lesson email to the paying customer
+    if (userEmail && lesson) {
+      try {
+        await sendLessonEmail({
+          to: userEmail,
+          lessonTitle: lesson.title,
+          lessonDate: lesson.date,
+          lessonTime: lesson.time,
+          zoomLink: lesson.zoomLink,
+          template: content.emailTemplate,
+        });
+        console.log("Lesson email sent successfully to:", userEmail);
+      } catch (emailError) {
+        console.error("Failed to send lesson email:", emailError);
+        // Don't fail the whole flow if email fails — payment already went through
+      }
+    } else {
+      console.warn("Skipping lesson email — userEmail:", userEmail, "lesson found:", !!lesson);
+    }
+  } catch (error) {
+    console.error("Error processing payment callback:", error);
+    // Still redirect to success — the payment itself went through at Upay
+  }
+
+  // 4. Redirect to success page
+  redirect("/payment-success");
 }
