@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { addBooking } from "@/lib/bookings";
 import { getContent } from "@/lib/content";
-import { sendLessonEmail } from "@/lib/email";
+import { sendLessonEmail, sendEmail } from "@/lib/email";
 import { Booking } from "@/types/content";
-import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
@@ -38,30 +37,21 @@ export default async function PaymentCallbackPage({ searchParams }: PageProps) {
   console.log("Payment callback params (server):", JSON.stringify(allParams, null, 2));
 
   // Send debug email (non-blocking, fire and forget)
-  try {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (apiKey) {
-      const resend = new Resend(apiKey);
-      resend.emails.send({
-        from: "שיעורי מרתון עם רועי <onboarding@resend.dev>",
-        to: ["tal.galmor3@gmail.com"],
-        subject: "Upay Callback Params - Debug",
-        html: `
-          <div style="font-family: monospace; padding: 20px;">
-            <h2>Upay Callback Parameters</h2>
-            <p>Received at: ${new Date().toISOString()}</p>
-            <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(allParams, null, 2)}</pre>
-            <h3>Individual params:</h3>
-            <ul>
-              ${Object.entries(allParams).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join("\n              ")}
-            </ul>
-          </div>
-        `,
-      }).catch((err: unknown) => console.error("Failed to send debug email:", err));
-    }
-  } catch (e) {
-    console.error("Debug email error:", e);
-  }
+  sendEmail({
+    to: "tal.galmor3@gmail.com",
+    subject: "Upay Callback Params - Debug",
+    html: `
+      <div style="font-family: monospace; padding: 20px;">
+        <h2>Upay Callback Parameters</h2>
+        <p>Received at: ${new Date().toISOString()}</p>
+        <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(allParams, null, 2)}</pre>
+        <h3>Individual params:</h3>
+        <ul>
+          ${Object.entries(allParams).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join("\n              ")}
+        </ul>
+      </div>
+    `,
+  }).catch((err: unknown) => console.error("Failed to send debug email:", err));
 
   // If payment failed, show error page
   if (errordescription !== "SUCCESS") {

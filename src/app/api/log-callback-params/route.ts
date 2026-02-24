@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -7,17 +7,8 @@ export async function POST(request: Request) {
 
     console.log("Upay callback params received:", params);
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.log("Resend API key not configured - skipping debug email");
-      console.log("Would send callback params to tal.galmor3@gmail.com:", params);
-      return NextResponse.json({ success: true, note: "no api key" });
-    }
-
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: "שיעורי מרתון עם רועי <onboarding@resend.dev>",
-      to: ["tal.galmor3@gmail.com"],
+    await sendEmail({
+      to: "tal.galmor3@gmail.com",
       subject: "Upay Callback Params - Debug",
       html: `
         <div style="font-family: monospace; padding: 20px;">
@@ -31,11 +22,6 @@ export async function POST(request: Request) {
         </div>
       `,
     });
-
-    if (error) {
-      console.error("Failed to send debug email:", error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
