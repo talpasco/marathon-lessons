@@ -17,7 +17,9 @@ export default async function PayPage({ params }: PageProps) {
     notFound();
   }
 
-  const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://marathon-lessons.vercel.app"}/payment-callback?lessonId=${encodeURIComponent(lesson.id)}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://marathon-lessons.vercel.app";
+  const returnUrl = `${baseUrl}/payment-callback?lessonId=${encodeURIComponent(lesson.id)}`;
+  const ipnUrl = `${baseUrl}/api/payment-webhook?lessonId=${encodeURIComponent(lesson.id)}`;
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-6 py-12 md:px-12 lg:px-24">
@@ -73,8 +75,8 @@ export default async function PayPage({ params }: PageProps) {
             <input type="hidden" value="roeedo@gmail.com" name="email" />
             <input type="hidden" value={lesson.price.toString()} name="amount" />
             <input type="hidden" value={returnUrl} name="returnurl" />
-            <input type="hidden" value="" name="ipnurl" />
-            <input type="hidden" value={`מרתון קבוצתי - ${lesson.title}`} name="paymentdetails" />
+            <input type="hidden" value={ipnUrl} name="ipnurl" />
+            <input type="hidden" value={`מרתון קבוצתי - ${lesson.title} [${lesson.id}]`} name="paymentdetails" />
             <input type="hidden" value="1" name="maxpayments" />
             <input type="hidden" value="1" name="livesystem" />
             <input type="hidden" value="" name="commissionreduction" />

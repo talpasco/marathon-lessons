@@ -42,3 +42,10 @@ export async function addBooking(booking: Booking): Promise<void> {
     throw error;
   }
 }
+
+// Check if a booking with this transactionId already exists
+export async function bookingExists(transactionId: string): Promise<boolean> {
+  if (!transactionId) return false;
+  const bookings = await getBookings();
+  return bookings.some((b) => b.transactionId === transactionId);
+}

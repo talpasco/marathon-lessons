@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { addBooking } from "@/lib/bookings";
-import { getContent } from "@/lib/content";
-import { sendLessonEmail, sendEmail } from "@/lib/email";
-import { Booking } from "@/types/content";
+import { processPayment } from "@/lib/process-payment";
+import { sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +21,7 @@ export default async function PaymentCallbackPage({ searchParams }: PageProps) {
   const errordescription = getParam("errordescription");
   const lessonId = getParam("lessonId");
   const userEmail = getParam("emailnotify") || getParam("user_email");
-  const cardownername = getParam("cardownername");
-  const cellphonenotify = getParam("cellphonenotify");
   const transactionid = getParam("transactionid");
-  const amount = getParam("amount");
-  const productdescription = getParam("productdescription");
 
   // Log all params for debugging
   const allParams: Record<string, string> = {};
@@ -36,19 +30,15 @@ export default async function PaymentCallbackPage({ searchParams }: PageProps) {
   }
   console.log("Payment callback params (server):", JSON.stringify(allParams, null, 2));
 
-  // Send debug email (non-blocking, fire and forget)
+  // Send debug email (non-blocking)
   sendEmail({
     to: "tal.galmor3@gmail.com",
-    subject: "Upay Callback Params - Debug",
+    subject: "Upay Callback (returnurl) - Debug",
     html: `
       <div style="font-family: monospace; padding: 20px;">
-        <h2>Upay Callback Parameters</h2>
+        <h2>Upay Callback Parameters (returnurl)</h2>
         <p>Received at: ${new Date().toISOString()}</p>
         <pre style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto;">${JSON.stringify(allParams, null, 2)}</pre>
-        <h3>Individual params:</h3>
-        <ul>
-          ${Object.entries(allParams).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join("\n              ")}
-        </ul>
       </div>
     `,
   }).catch((err: unknown) => console.error("Failed to send debug email:", err));
@@ -111,53 +101,21 @@ export default async function PaymentCallbackPage({ searchParams }: PageProps) {
     );
   }
 
-  // ===== Payment SUCCESS — process everything server-side =====
-  try {
-    // 1. Get lesson info from content
-    const content = await getContent();
-    const lesson = lessonId ? content.lessons.find((l) => l.id === lessonId) : null;
+  // ===== Payment SUCCESS — process with idempotency =====
+  // If the webhook (ipnurl) already processed this transaction, processPayment
+  // will detect the duplicate and skip — no double bookings or double emails.
+  const result = await processPayment({
+    transactionId: transactionid,
+    email: userEmail,
+    name: getParam("cardownername"),
+    phone: getParam("cellphonenotify"),
+    lessonId,
+    amount: getParam("amount"),
+    productdescription: getParam("productdescription"),
+  });
 
-    // 2. Save booking (most important — records the payment)
-    const booking: Booking = {
-      id: `booking-${Date.now()}-${transactionid}`,
-      email: userEmail,
-      name: cardownername,
-      phone: cellphonenotify,
-      lessonId,
-      lessonTitle: lesson?.title || productdescription || "",
-      zoomLink: lesson?.zoomLink || "",
-      transactionId: transactionid,
-      amount,
-      timestamp: new Date().toISOString(),
-    };
+  console.log("Callback processPayment result:", result);
 
-    await addBooking(booking);
-    console.log("Booking saved successfully:", booking.id);
-
-    // 3. Send lesson email to the paying customer
-    if (userEmail && lesson) {
-      try {
-        await sendLessonEmail({
-          to: userEmail,
-          lessonTitle: lesson.title,
-          lessonDate: lesson.date,
-          lessonTime: lesson.time,
-          zoomLink: lesson.zoomLink,
-          template: content.emailTemplate,
-        });
-        console.log("Lesson email sent successfully to:", userEmail);
-      } catch (emailError) {
-        console.error("Failed to send lesson email:", emailError);
-        // Don't fail the whole flow if email fails — payment already went through
-      }
-    } else {
-      console.warn("Skipping lesson email — userEmail:", userEmail, "lesson found:", !!lesson);
-    }
-  } catch (error) {
-    console.error("Error processing payment callback:", error);
-    // Still redirect to success — the payment itself went through at Upay
-  }
-
-  // 4. Redirect to success page
+  // Redirect to success page
   redirect("/payment-success");
 }
