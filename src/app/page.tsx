@@ -40,7 +40,7 @@ export default async function Home() {
               >
                 {/* Lesson Image or Icon Placeholder */}
                 {lesson.imageUrl ? (
-                  <div className="w-16 h-16 rounded-xl mb-4 overflow-hidden">
+                  <div className="w-24 h-24 rounded-xl mb-4 overflow-hidden">
                     <img
                       src={lesson.imageUrl}
                       alt={lesson.title}
@@ -48,9 +48,9 @@ export default async function Home() {
                     />
                   </div>
                 ) : (
-                  <div className="w-16 h-16 bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
+                  <div className="w-24 h-24 bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      className="w-10 h-10 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

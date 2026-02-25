@@ -552,7 +552,7 @@ export default function AdminDashboard() {
                         </label>
                         <div className="flex items-center gap-4">
                           {/* Current Image Preview */}
-                          <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
+                          <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
                             {lesson.imageUrl ? (
                               <img
                                 src={lesson.imageUrl}
