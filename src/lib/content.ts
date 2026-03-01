@@ -19,7 +19,16 @@ export async function getContent(): Promise<SiteContent> {
       const contentBlob = blobs[0];
       const response = await fetch(contentBlob.url, { cache: "no-store" });
       if (response.ok) {
-        return await response.json();
+        const saved: SiteContent = await response.json();
+        // Merge with defaults so new fields are available
+        return {
+          ...defaultContent,
+          ...saved,
+          homepage: {
+            ...defaultContent.homepage,
+            ...saved.homepage,
+          },
+        };
       }
     }
 
