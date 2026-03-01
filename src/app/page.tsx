@@ -26,16 +26,23 @@ export default async function Home() {
             {content.homepage.description.map((line, index) => (
               <p key={index}>{line}</p>
             ))}
-            {content.homepage.contactPhone && (
+            {content.homepage.contactLine && (
               <p>
-                ליצירת קשר:{" "}
-                <a
-                  href={`tel:${content.homepage.contactPhone}`}
-                  className="text-blue-600 hover:underline"
-                  dir="ltr"
-                >
-                  {content.homepage.contactPhone}
-                </a>
+                {content.homepage.contactLine.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                  /^https?:\/\//.test(part) ? (
+                    <a
+                      key={i}
+                      href={part}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {part}
+                    </a>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  )
+                )}
               </p>
             )}
           </div>

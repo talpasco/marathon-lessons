@@ -338,15 +338,14 @@ export default function AdminDashboard() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                טלפון ליצירת קשר
+                שורה נוספת (קישורים יהפכו אוטומטית ללינקים)
               </label>
               <input
                 type="text"
-                value={content.homepage.contactPhone || ""}
-                onChange={(e) => updateHomepage("contactPhone", e.target.value)}
+                value={content.homepage.contactLine || ""}
+                onChange={(e) => updateHomepage("contactLine", e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="050-0000000"
-                dir="ltr"
+                placeholder="לדוגמה: נתקלתם בבעיה? צרו איתי קשר https://tinyurl.com/3whv2yv4"
               />
             </div>
           </div>
