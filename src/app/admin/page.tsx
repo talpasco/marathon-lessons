@@ -335,6 +335,20 @@ export default function AdminDashboard() {
                 />
               ))}
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                טלפון ליצירת קשר
+              </label>
+              <input
+                type="text"
+                value={content.homepage.contactPhone || ""}
+                onChange={(e) => updateHomepage("contactPhone", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="050-0000000"
+                dir="ltr"
+              />
+            </div>
           </div>
         )}
 

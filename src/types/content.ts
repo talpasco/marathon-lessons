@@ -33,6 +33,7 @@ export interface SiteContent {
     subtitle: string;
     sectionTitle: string;
     description: string[];
+    contactPhone?: string;
   };
   lessons: Lesson[];
   emailTemplate?: EmailTemplate;
@@ -66,6 +67,7 @@ export const defaultContent: SiteContent = {
       "שורה שנייה של טקסט - ניתן לערוך בפאנל הניהול",
       "שורה שלישית של טקסט - ניתן לערוך בפאנל הניהול",
     ],
+    contactPhone: "050-0000000",
   },
   lessons: [
     {

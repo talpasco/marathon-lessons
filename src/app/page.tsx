@@ -26,6 +26,18 @@ export default async function Home() {
             {content.homepage.description.map((line, index) => (
               <p key={index}>{line}</p>
             ))}
+            {content.homepage.contactPhone && (
+              <p>
+                ליצירת קשר:{" "}
+                <a
+                  href={`tel:${content.homepage.contactPhone}`}
+                  className="text-blue-600 hover:underline"
+                  dir="ltr"
+                >
+                  {content.homepage.contactPhone}
+                </a>
+              </p>
+            )}
           </div>
         </header>
 
