@@ -1,38 +1,33 @@
-import { put, list } from "@vercel/blob";
+import { getDb } from "@/lib/mongodb";
 import { SiteContent, defaultContent } from "@/types/content";
 
-const CONTENT_BLOB_NAME = "site-content.json";
+const COLLECTION = "content";
+const DOC_ID = "site-content";
 
 export async function getContent(): Promise<SiteContent> {
   try {
-    // Check if BLOB token exists
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.log("No BLOB_READ_WRITE_TOKEN, using default content");
+    if (!process.env.MONGODB_URI) {
+      console.log("No MONGODB_URI, using default content");
       return defaultContent;
     }
 
-    // List blobs to find our content file
-    const { blobs } = await list({ prefix: CONTENT_BLOB_NAME });
+    const db = await getDb();
+    const doc = await db.collection(COLLECTION).findOne({ _id: DOC_ID as never });
 
-    if (blobs.length > 0) {
-      // Get the most recent blob
-      const contentBlob = blobs[0];
-      const response = await fetch(contentBlob.url, { cache: "no-store" });
-      if (response.ok) {
-        const saved: SiteContent = await response.json();
-        // Merge with defaults so new fields are available
-        return {
-          ...defaultContent,
-          ...saved,
-          homepage: {
-            ...defaultContent.homepage,
-            ...saved.homepage,
-          },
-        };
-      }
+    if (doc) {
+      // Remove MongoDB _id field
+      const { _id, ...saved } = doc as unknown as SiteContent & { _id: string };
+      // Merge with defaults so new fields are available
+      return {
+        ...defaultContent,
+        ...saved,
+        homepage: {
+          ...defaultContent.homepage,
+          ...saved.homepage,
+        },
+      };
     }
 
-    // Return default content if blob doesn't exist
     return defaultContent;
   } catch (error) {
     console.error("Error fetching content:", error);
@@ -42,13 +37,14 @@ export async function getContent(): Promise<SiteContent> {
 
 export async function saveContent(content: SiteContent): Promise<string> {
   try {
-    const blob = await put(CONTENT_BLOB_NAME, JSON.stringify(content, null, 2), {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+    const db = await getDb();
+    await db.collection(COLLECTION).updateOne(
+      { _id: DOC_ID as never },
+      { $set: { ...content, _id: DOC_ID } as never },
+      { upsert: true }
+    );
 
-    return blob.url;
+    return "saved";
   } catch (error) {
     console.error("Error saving content:", error);
     throw error;

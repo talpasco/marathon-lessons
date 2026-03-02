@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { verifySession } from "@/lib/auth";
+import { getDb } from "@/lib/mongodb";
+import { Binary } from "mongodb";
 
 export async function POST(request: NextRequest) {
-  // Check authentication using same method as other admin routes
   const isAuthenticated = await verifySession();
   if (!isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,12 +18,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Upload to Vercel Blob
-    const blob = await put(`lesson-images/${lessonId}-${Date.now()}`, file, {
-      access: "public",
-    });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const imageId = `${lessonId}-${Date.now()}`;
 
-    return NextResponse.json({ url: blob.url });
+    const db = await getDb();
+    await db.collection("images").updateOne(
+      { _id: imageId as never },
+      {
+        $set: {
+          _id: imageId,
+          data: new Binary(buffer),
+          contentType: file.type,
+          filename: file.name,
+          uploadedAt: new Date(),
+        } as never,
+      },
+      { upsert: true }
+    );
+
+    const url = `/api/images/${imageId}`;
+    return NextResponse.json({ url });
   } catch (error) {
     console.error("Error uploading image:", error);
     return NextResponse.json(
