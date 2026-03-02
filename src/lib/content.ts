@@ -38,9 +38,9 @@ export async function getContent(): Promise<SiteContent> {
 export async function saveContent(content: SiteContent): Promise<string> {
   try {
     const db = await getDb();
-    await db.collection(COLLECTION).updateOne(
+    await db.collection(COLLECTION).replaceOne(
       { _id: DOC_ID as never },
-      { $set: { ...content, _id: DOC_ID } as never },
+      { ...content, _id: DOC_ID } as never,
       { upsert: true }
     );
 
